@@ -43,6 +43,6 @@ class UpdateChecker:
                 self.header += "Please visit the manual site to upgrade the software.\n\n"
     
     def update(self):
-        self.repo.git.checkout(self.latest_tag)
+        self.repo.git.checkout(self.latest_tag,force=True)
         print("Update completed.")
         print("Please restart JEMViewer.")
