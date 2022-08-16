@@ -8,7 +8,7 @@ except ImportError:
 class UpdateChecker:
     def __init__(self):
         self.can_update = False
-        self.header = "\nJEMViewer2\n\n"
+        self.header = "\nJEMViewer 2\n"
         if import_failed:
             self.header += "You need to install git to manage software version.\n"
             self.header += "Please visit the manual site for more detail.\n\n"
@@ -21,7 +21,7 @@ class UpdateChecker:
             origin.fetch()
         except git.exc.GitCommandError:
             self.header += "\n"
-            self.header += "GitCommandError occurred.\n"
+            self.header += "GitCommandError has occurred.\n"
             self.header += "Please check your network connection.\n\n"
             return
         tags = sorted(self.repo.tags, key=lambda t: t.commit.committed_datetime)
