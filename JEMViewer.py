@@ -20,9 +20,7 @@ from addon_installer import AddonInstaller
 import argparse
 import graphlib
 from axeslinestool import AxesTool, LinesTool
-
-SOFTWARE = "JEMViewer"
-VERSION = "2.2.0"
+from update_checker import UpdateChecker
 
 if os.name == "nt": #windows
     import PyQt6
@@ -60,13 +58,13 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.saved_command = ""
         window_id = "id: " + randomname(4)
-        self.setWindowTitle(f"{SOFTWARE}{VERSION} {window_id}")
+        self.setWindowTitle(f"JEMViewer2 {window_id}")
         self.setGeometry(300, 300, 800, 500)
         self.filepath = filepath
-        banner = f"\n{SOFTWARE} {VERSION}\n\n"
+        self.update_checker = UpdateChecker()
         # if filepath != None:
         #     matplotlib.rcParams['savefig.directory'] = (os.path.dirname(filepath))
-        self.ipython_w = IPythonWidget(banner)
+        self.ipython_w = IPythonWidget(self.update_checker.header)
         self.ns = self.ipython_w.ns
         self.figure_widgets = []
         self.figs = []
@@ -373,6 +371,8 @@ class MainWindow(QMainWindow):
             "move_line": self.linestool.move_line,
             "set_axesproperties": self.axestool.set_properties,
         }
+        if self.update_checker.can_update:
+            namespace["JEMViewer"] = self.update_checker
         self.ns.update(DEFAULT_NAMESPACE)
         self.ns.update(namespace)
 
