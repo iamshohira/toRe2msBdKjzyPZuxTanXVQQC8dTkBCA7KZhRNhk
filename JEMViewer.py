@@ -25,7 +25,7 @@ from update_checker import UpdateChecker
 if os.name == "nt": #windows
     import PyQt6
     dirname = os.path.dirname(PyQt6.__file__)
-    plugin_path = os.path.join(dirname, "Qt5", "plugins", "platforms")
+    plugin_path = os.path.join(dirname, "Qt6", "plugins", "platforms")
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
 
 parser = argparse.ArgumentParser()

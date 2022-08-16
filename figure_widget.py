@@ -302,9 +302,11 @@ class MyToolbar(QToolBar):
 
     def linestool(self):
         self.parent.linestool.show()
+        self.parent.linestool.raise_()
 
     def axestool(self):
         self.parent.axestool.show()
+        self.parent.axestool.raise_()
 
     def back(self):
         self.mpl_toolbars[self.focused_canvas].back()
@@ -316,6 +318,7 @@ class MyToolbar(QToolBar):
         if not MySubplotToolQt.active:
             self._subplot_dialog = MySubplotToolQt(self.focused_canvas, self)
         self._subplot_dialog.show()
+        self._subplot_dialog.raise_()
 
     def save_figure(self):
         self.mpl_toolbars[self.focused_canvas].save_figure()
@@ -324,6 +327,7 @@ class MyToolbar(QToolBar):
         if not SaveForAnimationDialog.active:
             self._savefiganim_dialog = SaveForAnimationDialog(self.focused_canvas, self)
         self._savefiganim_dialog.show()
+        self._savefiganim_dialog.raise_()
 
     def home(self):
         self.mpl_toolbars[self.focused_canvas].home()
