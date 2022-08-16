@@ -16,12 +16,12 @@ class UpdateChecker:
         self.repo = git.Repo(os.path.join(os.path.dirname(sys.argv[0])))
         self.current_tag = next((tag for tag in self.repo.tags if tag.commit == self.repo.head.commit), None)
         if self.current_tag == None:
-            self.header += f"Unknown version: {self.repo.head.commit.hexsha}\n"
+            self.header += f"Unknown version: {self.repo.head.commit.hexsha}\n\n"
             return
         self.header += f"current version: {self.current_tag.name}"
         origin = self.repo.remote()
         try:
-            origin.fetch()
+            origin.fetch(prune=True, prune_tags=True)
         except git.exc.GitCommandError:
             self.header += "\n"
             self.header += "GitCommandError has occurred.\n"
