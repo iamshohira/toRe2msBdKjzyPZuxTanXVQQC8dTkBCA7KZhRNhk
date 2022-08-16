@@ -1,5 +1,3 @@
-from asyncore import read
-from readline import read_init_file
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
