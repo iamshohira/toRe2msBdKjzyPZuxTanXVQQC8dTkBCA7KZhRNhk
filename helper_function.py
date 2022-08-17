@@ -1,4 +1,4 @@
-def set_axsize(w,h,fig=fig):
+def set_axsize(w,h,fig=None):
     """set axis size
 
     Args:
@@ -6,6 +6,8 @@ def set_axsize(w,h,fig=fig):
         h (float): height in cm
         fig (Figure): target figure [defalut=figs[0]]
     """
+    if fig == None:
+        fig = fig0
     winch = w / 2.54
     hinch = h / 2.54
     now_winch, now_hinch = fig.get_size_inches()
@@ -15,12 +17,11 @@ def set_axsize(w,h,fig=fig):
     bottom_m = now_hinch * fig.subplotpars.bottom
     new_winch = left_m + winch + right_m
     new_hinch = top_m + hinch + bottom_m
-    id_ = figs.index(fig)
-    fig_widgets[id_].resize(int(new_winch*72),int(new_hinch*72))
+    fig.canvas.resize(int(new_winch*72),int(new_hinch*72))
     fig.set_size_inches(new_winch,new_hinch)
 
 
-def set_figsize(w,h,fig=fig):
+def set_figsize(w,h,fig=None):
     """set figure size
 
     Args:
@@ -28,11 +29,12 @@ def set_figsize(w,h,fig=fig):
         h (float): height in cm
         fig (Figure): target figure [defalut=figs[0]]
     """
+    if fig == None:
+        fig = fig0
     winch = w / 2.54
     hinch = h / 2.54
     fig.set_size_inches(winch,hinch)
-    id_ = figs.index(fig)
-    fig_widgets[id_].resize(int(winch*72),int(hinch*72))
+    fig.canvas.resize(int(winch*72),int(hinch*72))
     fig.set_size_inches(winch,hinch)
 
 
@@ -128,43 +130,42 @@ def set_font(fontname,axis=None):
         for t in axis.texts:
             t.set_fontname(fontname)
 
+# def savefig_for_animation(baseplots, animationplots, axis=ax, framecolor='black'):
+#     """write separated figures for graph animation in powerpoint
 
-def savefig_for_animation(baseplots, animationplots, axis=ax, framecolor='black'):
-    """write separated figures for graph animation in powerpoint
+#     Args:
+#         baseplots (List[matplotlib.Line2D]): List of matplotlib's plot data, which are drawn with the figure frame.
+#         animationplots (List[List[matplotlib.Line2D]]): List of list of matplotlib's plot data, which are drawn without the figure frame.
+#         axis (matplotlib.Axis, optional): target axis. Defaults to ax.
+#         framecolor (str, optional): frame color applied after operation. Defaults to 'black'.
+#     """
+#     from PyQt6.QtWidgets import QFileDialog
+#     import os
+#     filte = "Encapsulated Postscript (*.eps);;Portable Network Graphics (*.png);;Portable Document Format (*.pdf);;Scalable Vector Graphics (*.svg)"
+#     filename = QFileDialog.getSaveFileName(None,"Figure name",fig.canvas.get_default_filename(),filte,"Portable Document Format (*.pdf)")
+#     if filename[0] == '':
+#         return
 
-    Args:
-        baseplots (List[matplotlib.Line2D]): List of matplotlib's plot data, which are drawn with the figure frame.
-        animationplots (List[List[matplotlib.Line2D]]): List of list of matplotlib's plot data, which are drawn without the figure frame.
-        axis (matplotlib.Axis, optional): target axis. Defaults to ax.
-        framecolor (str, optional): frame color applied after operation. Defaults to 'black'.
-    """
-    from PyQt6.QtWidgets import QFileDialog
-    import os
-    filte = "Encapsulated Postscript (*.eps);;Portable Network Graphics (*.png);;Portable Document Format (*.pdf);;Scalable Vector Graphics (*.svg)"
-    filename = QFileDialog.getSaveFileName(None,"Figure name",fig.canvas.get_default_filename(),filte,"Portable Document Format (*.pdf)")
-    if filename[0] == '':
-        return
-
-    prefix, ext = os.path.splitext(filename[0])
+#     prefix, ext = os.path.splitext(filename[0])
     
-    def set_visible_for_all(b):
-        for plot in axis.lines:
-            plot.set_visible(b)
+#     def set_visible_for_all(b):
+#         for plot in axis.lines:
+#             plot.set_visible(b)
 
-    set_visible_for_all(False)        
-    for plot in baseplots:
-        plot.set_visible(True)
-    fig.savefig('{0}{1:02d}{2}'.format(prefix,0,ext))
+#     set_visible_for_all(False)        
+#     for plot in baseplots:
+#         plot.set_visible(True)
+#     fig.savefig('{0}{1:02d}{2}'.format(prefix,0,ext))
 
-    set_framecolor("none")
-    for i,plotlist in enumerate(animationplots):
-        set_visible_for_all(False)
-        for plot in plotlist:
-            plot.set_visible(True)
-        fig.savefig('{0}{1:02d}{2}'.format(prefix,i+1,ext))
+#     set_framecolor("none")
+#     for i,plotlist in enumerate(animationplots):
+#         set_visible_for_all(False)
+#         for plot in plotlist:
+#             plot.set_visible(True)
+#         fig.savefig('{0}{1:02d}{2}'.format(prefix,i+1,ext))
     
-    set_visible_for_all(True)
-    set_framecolor(framecolor,axis=axis)
+#     set_visible_for_all(True)
+#     set_framecolor(framecolor,axis=axis)
 
 
 def set_all_linewidth(width,axis=None):
@@ -261,43 +262,6 @@ def font_dialog(axis=None):
             print("The closest \"{}\" was used instead.".format(closest[0]))
         print("Family name: {}".format(closest[0],))
         print("Point size : {}".format(font.pointSize(),))
-
-
-def reverse_lightness(hex_color):
-    """reverse lightness
-
-    Args:
-        hex_color (str): hex_color like #rrggbb
-
-    Returns:
-        str: hex color like #rrggbb
-    """
-    replacelist = {
-        "w": "#ffffff",
-        "g": "#008000",
-        "b": "#0000ff",
-        "r": "#ff0000",
-        "c": "#00bfbf",
-        "m": "#bf00bf",
-        "y": "#bfbf00",
-        "k": "#000000",
-    }
-    import colorsys
-    if hex_color in replacelist.keys():
-        hex_color = replacelist[hex_color]
-    rgb_hex = [hex_color[1:3],hex_color[3:5],hex_color[5:7]]
-    rgb = [int(x,16)/255 for x in rgb_hex]
-    # RGB to HLS
-    hls = np.array(colorsys.rgb_to_hls(*rgb))
-    hls[1] = 1 - hls[1]
-    # HLS to RGB
-    rgb = np.array(colorsys.hls_to_rgb(*hls)) * 255
-    rgb = np.round(rgb).astype(int)
-    new_hex_color = "#"
-    # decimal to hex color code
-    for i in rgb:
-        new_hex_color += format(i,'02x')
-    return new_hex_color
 
 
 class label:
