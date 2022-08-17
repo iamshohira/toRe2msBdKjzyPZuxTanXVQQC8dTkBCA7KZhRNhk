@@ -57,8 +57,8 @@ class MainWindow(QMainWindow):
     def __init__(self, filepath=os.path.join(os.path.expanduser('~'),'Desktop'), parent=None):
         super().__init__(parent)
         self.saved_command = ""
-        window_id = "id: " + randomname(4)
-        self.setWindowTitle(f"JEMViewer2 {window_id}")
+        self.window_id = randomname(4)
+        self.setWindowTitle(f"JEMViewer2 id: {self.window_id}")
         self.setGeometry(300, 300, 800, 500)
         self.filepath = filepath
         self.update_checker = UpdateChecker()
@@ -208,7 +208,7 @@ class MainWindow(QMainWindow):
 
     def add_figure(self):
         figure_w = MyFigureCanvas(self, self.toolbar)
-        figure_w.set_window_title(id=len(self.figure_widgets), prefix="Figure")
+        figure_w.set_window_title(id=len(self.figure_widgets), prefix=self.window_id)
         figure_w.nd_pasted.connect(self.append_ndarray)
         figure_w.line_pasted.connect(self.append_line2D)
         figure_w.table_required.connect(self.open_tablewidget)
@@ -308,8 +308,9 @@ class MainWindow(QMainWindow):
 
     def _set_windowname(self):
         self.setWindowTitle(os.path.basename(self.filepath))
-        # self.figure_w.setWindowTitle(os.path.basename(self.filepath))
-        # self.figure_w.get_default_filename = lambda: os.path.splitext(self.filepath)[0]
+        for i, figure_w in enumerate(self.figure_widgets):
+            figure_w.set_window_title(i, prefix=os.path.basename(self.filepath))
+            figure_w.get_default_filename = lambda: os.path.splitext(self.filepath)[0]
 
     def load(self):
         if self.filepath != None:
@@ -362,7 +363,6 @@ class MainWindow(QMainWindow):
             "savedir": savefile.dirname,
             "popup": self.raise_figure_widgets,
             "initialize": self.initialize,
-            "update_command": self.update_command,
             "update_alias": self.update_alias,
             "show_data": self.show_datatable,
             "add_figure": self.add_figure,
@@ -401,14 +401,6 @@ class MainWindow(QMainWindow):
         self._load_user_py()
         savefile.save_command(datetime.now().strftime('\n# COMMAND LOG %Y-%m-%d %H:%M:%S\n'))
         self.update_alias()
-
-    def update_command(self):
-        pass
-        # self.figure_w.fig.clear()
-        # self.figure_w.fig.subplots(1,1)
-        # self.ns["ax"] = self.figure_w.fig.axes[0]
-        # command = savefile.load_command_py()
-        # self.ipython_w.executeCommand(command,hidden=True)
 
     def direct_edit(self):
         subprocess.run(run_command+[savefile.logfilename])

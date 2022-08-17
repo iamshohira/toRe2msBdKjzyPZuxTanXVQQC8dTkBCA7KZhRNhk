@@ -22,7 +22,7 @@ class SaveFiles():
             pass
         
     def save_command(self,command,fileparse=False):
-        exclude = ["edit()","initialize()", "update_command()","savefig"]
+        exclude = ["edit()","initialize()","savefig"]
         for e in exclude:
             if e in command:
                 return

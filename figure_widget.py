@@ -52,7 +52,7 @@ class MyFigureCanvas(FigureCanvas):
         if prefix != None:
             self.prefix = prefix
         self.fig_id = id
-        self.setWindowTitle(f"{self.prefix}: {id}")
+        self.setWindowTitle(f"{self.prefix} | Figure:{id}")
 
     def dragEnterEvent(self,event):
         event.accept()
