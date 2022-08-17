@@ -315,12 +315,13 @@ class MainWindow(QMainWindow):
         if self.filepath != None:
             savefile.open(self.filepath)
             command = savefile.load()
+            # PyQt5 to PyQt6
+            command = command.replace("PyQt5","PyQt6")
             self.ipython_w.executeCommand(command,hidden=True)
             log = savefile.load_log()
             self._set_windowname()
             self.log_w.set(log)
-            # PyQt5 to PyQt6
-            self.saved_command = command.replace("PyQt5","PyQt6")
+            self.saved_command = command
 
     def show_datatable(self, data):
         if type(data) == Line2D:
