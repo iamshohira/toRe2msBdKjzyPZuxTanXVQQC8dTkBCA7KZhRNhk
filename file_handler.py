@@ -1,6 +1,6 @@
 import random, pickle
 import sys, os, string, shutil
-import re
+import re, pathlib
 
 RES_DIR = os.path.join(os.path.dirname(sys.argv[0]),'png')
 
@@ -15,6 +15,9 @@ class SaveFiles():
     def make_tmpdir(self,home_dir):
         self.dirname = os.path.join(home_dir,self.randomname(10))
         os.makedirs(self.dirname)
+        if os.name == "nt": #windows convert \\ to /
+            pldir = pathlib.Path(self.dirname)
+            self.dirname = pldir.as_posix()
 
     def make_commandfile(self):
         self.logfilename = os.path.join(self.dirname,'command.py')
@@ -22,7 +25,7 @@ class SaveFiles():
             pass
         
     def save_command(self,command,fileparse=False):
-        exclude = ["edit()","initialize()","savefig"]
+        exclude = ["edit()","initialize()", "update_command()","savefig"]
         for e in exclude:
             if e in command:
                 return
@@ -75,6 +78,7 @@ class SaveFiles():
         figaxid = lis[4]
         filename = os.path.abspath(filename)
         savedname = os.path.join(self.dirname, self.splittedfile(filename))
+        print(filename)
         os.makedirs(os.path.dirname(savedname),exist_ok=True)
         if os.path.isfile(filename):
             shutil.copy(filename,savedname)
@@ -86,7 +90,11 @@ class SaveFiles():
             print("update_alias()",file=f)
 
     def splittedfile(self, filename):
-        return os.path.splitdrive(filename)[1][1:]
+        fp = os.path.splitdrive(filename)[1]
+        if os.name == "nt": #windows convert \\ to /s
+            plfp = pathlib.Path(fp)
+            fp = plfp.as_posix()
+        return fp[1:]
 
     def randomname(self,n):
         randlst = [random.choice(string.ascii_lowercase) for i in range(n)]
