@@ -21,7 +21,7 @@ class SaveFiles():
 
     def make_commandfile(self):
         self.logfilename = os.path.join(self.dirname,'command.py')
-        with open(self.logfilename,'w') as f:
+        with open(self.logfilename, 'w', encoding='utf-8') as f:
             pass
         
     def save_command(self,command,fileparse=False):
@@ -48,7 +48,7 @@ class SaveFiles():
                     os.makedirs(os.path.dirname(savedname),exist_ok=True)
                     shutil.copytree(filename, savedname)
                     command = command.replace('"{}"'.format(filename,),"os.path.join(savedir,\"{}\")".format(self.splittedfile(filename),))
-        with open(self.logfilename,'a') as f:
+        with open(self.logfilename,'a', encoding='utf-8') as f:
             print(command,file=f)
             print("update_alias()",file=f)
 
@@ -84,7 +84,7 @@ class SaveFiles():
             shutil.copy(filename,savedname)
         if os.path.isdir(filename):
             shutil.copytree(filename,savedname)
-        with open(self.logfilename,'a') as f:
+        with open(self.logfilename,'a', encoding='utf-8') as f:
             print(f"{newname} = {functionname}(os.path.join(savedir,\"{self.splittedfile(filename)}\"),figs[{figaxid['figs']}].axes[{figaxid['axes']}])",file=f)
             print("justnow = {}".format(newname,),file=f)
             print("update_alias()",file=f)
@@ -111,12 +111,12 @@ class SaveFiles():
         shutil.unpack_archive(filepath,format='zip',extract_dir=self.dirname)
 
     def load(self):
-        with open(self.logfilename, 'r') as f:
+        with open(self.logfilename, 'r', encoding='utf-8') as f:
             command = f.read()
         return command
 
     def load_command_py(self):
-        with open(self.logfilename,"r") as f:
+        with open(self.logfilename,"r", encoding='utf-8') as f:
             command = f.read()
         return command
 
@@ -129,19 +129,19 @@ class SaveFiles():
         return log
 
     def save_axesproperties(self, values):
-        with open(self.logfilename,'a') as f:
+        with open(self.logfilename,'a', encoding='utf-8') as f:
             print(f"set_axesproperties({values})",file=f)
 
     def save_lineproperties(self, line_id, properties):
-        with open(self.logfilename,'a') as f:
+        with open(self.logfilename,'a', encoding='utf-8') as f:
             print(f"set_lineproperties({line_id},{properties})",file=f)
 
     def save_linemove(self, old_id, new_id):
-        with open(self.logfilename, "a") as f:
+        with open(self.logfilename, "a", encoding='utf-8') as f:
             print(f"move_line({old_id},{new_id})",file=f)
 
     def save_subplotsparam(self, is_tight, fig_id, parameters):
-        with open(self.logfilename, "a") as f:
+        with open(self.logfilename, "a", encoding='utf-8') as f:
             print(f"figs[{fig_id}].set_tight_layout({is_tight})",file=f)
             if is_tight:
                 print(f"figs[{fig_id}].tight_layout()",file=f)

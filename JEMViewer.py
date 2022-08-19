@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
         files = glob.glob(os.path.join(ADDON_DIR,"*.py"))
         dependences = {}
         for fi in files:
-            with open(fi, "r") as f:
+            with open(fi, "r", encoding='utf-8') as f:
                 f.readline()
                 line = f.readline()
                 if "Dependence:" in line:
@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         for fn in ts.static_order():
             if fn == "": continue
             fi = os.path.join(ADDON_DIR, fn)
-            with open(fi,'r') as f:
+            with open(fi,'r', encoding='utf-8') as f:
                 command = f.read()
                 if command not in self.saved_command:
                     self.ipython_w.executeCommand(command,hidden=True)
