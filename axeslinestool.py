@@ -108,7 +108,7 @@ class ColorEdit(QWidget):
     def __init__(self, parent=None, initial=None):
         super().__init__(parent)
         self.edit = StrEdit(initial=initial)
-        self.edit.setFixedWidth(50)
+        self.edit.setFixedWidth(60)
         self.btn = ColorButton(inicolor=initial)
         self.btn.colorPicked.connect(lambda color: self.edit.setText(color))
         self.edit.textChanged.connect(self.btn.set_color)
@@ -163,12 +163,25 @@ class AliasButton(QPushButton):
     def value(self):
         return ""
 
+    def mouseMoveEvent(self, e):
+        if e.buttons() == Qt.LeftButton:
+            drag = QDrag(self)
+            mime = QMimeData()
+            # mime.setText(self.text())
+            # print(mime.text())
+            drag.setMimeData(mime)
+            pixmap = QPixmap(self.size())
+            self.render(pixmap)
+            drag.setPixmap(pixmap)
+            drag.exec_(Qt.MoveAction)
+
 class LinesTool(QTableWidget):
     line_moved = pyqtSignal()
     alias_clicked = pyqtSignal(str)
     def __init__(self, figs):
         super().__init__()
-        self.header = ["show","figs","axes","lines","alias","zorder","label","memo","line style","width","line color","marker","size","marker color","edge","edge color"]
+        # self.header = ["show","figs","axes","lines","alias","zorder","label","memo","line style","width","line color","marker","size","marker color","edge","edge color"]
+        self.header = ["show","alias","zorder","label","memo","line style","width","line color","marker","size","marker color","edge","edge color"]
         self.setColumnCount(len(self.header))
         self.setHorizontalHeaderLabels(self.header)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -176,6 +189,8 @@ class LinesTool(QTableWidget):
         self.figs = figs
         self.load_lines()
         self.setWindowTitle("LinesTool")
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.contextmenu)
 
     def fit_size(self):
         self.setMinimumWidth(self.horizontalHeader().length()+40)
@@ -210,6 +225,7 @@ class LinesTool(QTableWidget):
         obj.row = self.row_id
         obj.changed.connect(self.update)
         self.setCellWidget(self.row_id, self.column_id, obj)
+        return obj
         
     def appendRow(self):
         self.row_id += 1
@@ -221,23 +237,31 @@ class LinesTool(QTableWidget):
         self.row_id = -1
         self.column_id = -1
         self.lines = []
+        self.aliasbuttons = {}
+        for fig in self.figs:
+            if fig in self.cids:
+                fig.canvas.mpl_disconnect(self.cids[fig])
+        self.cids = {}
         
     def load_lines(self):
         self.initialize()
         for h, fig in enumerate(self.figs):
+            if not self.isHidden():
+                self.cids[fig] = fig.canvas.mpl_connect('pick_event', self.on_pick)
             for i, ax in enumerate(fig.axes):
                 for j, line in enumerate(ax.lines):
                     self.appendRow()
                     # visible
                     self.appendCellWidgetToColumn("bool", initial=line.get_visible())
                     # axes
-                    self.appendCellWidgetToColumn("intcombo", max=len(self.figs), initial=h)
+                    #self.appendCellWidgetToColumn("intcombo", max=len(self.figs), initial=h)
                     # axes
-                    self.appendCellWidgetToColumn("intcombo", max=len(fig.axes), initial=i)
+                    #self.appendCellWidgetToColumn("intcombo", max=len(fig.axes), initial=i)
                     # lines
-                    self.appendCellWidgetToColumn("int", initial=j, readonly=True)
+                    #self.appendCellWidgetToColumn("int", initial=j, readonly=True)
                     # lines
-                    self.appendCellWidgetToColumn("alias", initial=f"fig{h}ax{i}l{j}")
+                    btn = self.appendCellWidgetToColumn("alias", initial=f"fig{h}ax{i}l{j}")
+                    self.aliasbuttons[line] = btn
                     # zorder
                     self.appendCellWidgetToColumn("int", initial=line.get_zorder())
                     # label
@@ -264,6 +288,7 @@ class LinesTool(QTableWidget):
                     edgecolor = mcolors.to_hex(mcolors.to_rgb(line.get_markeredgecolor()))
                     self.appendCellWidgetToColumn("color", initial=edgecolor)
                     self.lines.append(line)
+                    line.set_picker(5)
         self.resizeColumnsToContents()
         self.fit_size()
                 
@@ -271,19 +296,19 @@ class LinesTool(QTableWidget):
         irow = self.sender().row
         values = {h:self.cellWidget(irow,icol).value() for icol, h in enumerate(self.header)}
         line = self.lines[irow]
-        old_id = self.get_id(line)
-        if old_id["figs"] == values["figs"] and old_id["axes"] == values["axes"]:
-            self.set_properties(old_id, values)
-            savefile.save_lineproperties(old_id, values)
-            self.figs[values["figs"]].canvas.draw()
-        else:
-            new_id = {k:values[k] for k in ["figs","axes"]}
-            if old_id["figs"] != values["figs"]: new_id["axes"] = 0
-            self.move_line(old_id, new_id)
-            savefile.save_linemove(old_id, new_id)
-            self.figs[old_id["figs"]].canvas.draw()
-            self.figs[new_id["figs"]].canvas.draw()
-            self.load_lines()
+        id_ = self.get_id(line)
+        # if old_id["figs"] == values["figs"] and old_id["axes"] == values["axes"]:
+        self.set_properties(id_, values)
+        savefile.save_lineproperties(id_, values)
+        self.figs[id_["figs"]].canvas.draw()
+        # else:
+        #     new_id = {k:values[k] for k in ["figs","axes"]}
+        #     if old_id["figs"] != values["figs"]: new_id["axes"] = 0
+        #     self.move_line(old_id, new_id)
+        #     savefile.save_linemove(old_id, new_id)
+        #     self.figs[old_id["figs"]].canvas.draw()
+        #     self.figs[new_id["figs"]].canvas.draw()
+        #     self.load_lines()
 
     def get_id(self, line):
         id = {}
@@ -307,7 +332,7 @@ class LinesTool(QTableWidget):
         line.set_markeredgewidth(values["edge"])
         line.set_markeredgecolor(values["edge color"])
 
-    def move_line(self, old_id, new_id):
+    def move_line(self, old_id, new_id, delete=True):
         line = self.figs[old_id["figs"]].axes[old_id["axes"]].lines[old_id["lines"]]
         new_line, = self.figs[new_id["figs"]].axes[new_id["axes"]].plot(*line.get_data())
         new_line.set_visible(line.get_visible())
@@ -322,8 +347,60 @@ class LinesTool(QTableWidget):
         new_line.set_markerfacecolor(line.get_markerfacecolor())
         new_line.set_markeredgewidth(line.get_markeredgewidth())
         new_line.set_markeredgecolor(line.get_markeredgecolor())
-        line.remove()
+        if delete:
+            line.remove()
         self.line_moved.emit()
+
+    def contextmenu(self,point):
+        menu = QMenu(self)
+        duplicate_action = menu.addAction('Duplicate')
+        duplicate_action.triggered.connect(self.duplicate)
+        delete_action = menu.addAction('Delete')
+        delete_action.triggered.connect(self.delete)
+        menu.exec_(self.mapToGlobal(point))
+
+    def duplicate(self):
+        irow = self.currentRow()
+        line = self.lines[irow]
+        old_id = self.get_id(line)
+        self.move_line(old_id, old_id, delete=False)
+        savefile.save_linemove(old_id, old_id, delete=False)
+        self.figs[old_id["figs"]].canvas.draw()
+        self.load_lines()
+
+    def delete(self):
+        irow = self.currentRow()
+        line = self.lines[irow]
+        old_id = self.get_id(line)
+        line.remove()
+        savefile.save_removeline(old_id)
+        self.figs[old_id["figs"]].canvas.draw()
+        self.load_lines()
+
+    def move_by_drag(self, alias, fig_id, ax_id, is_copy):
+        s = re.split("fig|ax|l", alias)
+        old_id = {
+            "figs": int(s[1]),
+            "axes": int(s[2]),
+            "lines": int(s[3]),
+        }
+        new_id = {
+            "figs": fig_id,
+            "axes": ax_id,
+        }
+        self.move_line(old_id, new_id, delete = not is_copy)
+        savefile.save_linemove(old_id, new_id, delete = not is_copy)
+        self.figs[old_id["figs"]].canvas.draw()
+        self.figs[new_id["figs"]].canvas.draw()
+        self.load_lines()
+
+    def on_pick(self, e):
+        line = e.artist
+        self.aliasbuttons[line].mouseMoveEvent(e.guiEvent)
+
+    def closeEvent(self, a0: QCloseEvent) -> None:
+        self.initialize()
+        return super().closeEvent(a0)
 
 
 class AxesTool(QTableWidget):

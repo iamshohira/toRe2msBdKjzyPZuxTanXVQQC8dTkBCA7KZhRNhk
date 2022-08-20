@@ -153,7 +153,7 @@ class MainWindow(QMainWindow):
         def exit():
             savefile.remove_tmpdir()
             for figure_w in self.figure_widgets:
-                figure_w.close()
+                figure_w.close_()
             self.linestool.close()
             self.axestool.close()
             event.accept()
@@ -198,7 +198,7 @@ class MainWindow(QMainWindow):
 
     def _set_slot(self):
         self.linestool.line_moved.connect(self.update_alias)
-        self.linestool.alias_clicked.connect(self.ipython_w.printTextInBuffer)
+        self.linestool.alias_clicked.connect(self.ipython_w.printTextAtCurrentPos)
         self.ipython_w.command_finished.connect(self.log_w.store)
         self.ipython_w.command_finished.connect(lambda: self._save_command(fileparse=True))
         self.log_w.item_added.connect(self.draw_and_requiring_save)
@@ -217,10 +217,13 @@ class MainWindow(QMainWindow):
         figure_w.line_pasted.connect(self.update_alias)
         figure_w.table_required.connect(self.update_alias)
         figure_w.custom_loader.connect(self.update_alias)
+        figure_w.alias_pasted.connect(self.linestool.move_by_drag)
+        figure_w.remove_required.connect(self.remove_figure)
         figure_w.show()
         self.toolbar.add_canvas(figure_w)
         self.figure_widgets.append(figure_w)
         self.figs.append(figure_w.fig)
+        self.update_alias()
         return figure_w.fig
 
     def remove_figure(self, id):
@@ -235,9 +238,12 @@ class MainWindow(QMainWindow):
         figure_w.line_pasted.disconnect(self.update_alias)
         figure_w.table_required.disconnect(self.update_alias)
         figure_w.custom_loader.disconnect(self.update_alias)
-        figure_w.close()
+        figure_w.alias_pasted.disconnect(self.linestool.move_by_drag)
+        figure_w.remove_required.disconnect(self.remove_figure)
+        figure_w.close_()
         for i, figure_w in enumerate(self.figure_widgets):
             figure_w.set_window_title(id=i)
+        self.update_alias()
             
     def _remove_slot(self):
         self.linestool.line_moved.disconnect(self.update_alias)
@@ -301,7 +307,7 @@ class MainWindow(QMainWindow):
 
     def _open(self):
         for figure_w in self.figure_widgets:
-            figure_w.close()
+            figure_w.close_()
         self.ipython_w.stop()
         self.close()
         get_app_qt6().exit(EXIT_CODE_REBOOT)

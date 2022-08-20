@@ -52,6 +52,10 @@ class IPythonWidget(RichIPythonWidget):
         """ Prints some plain text to the console """
         self._insert_plain_text_into_buffer(self._get_prompt_cursor(), text)
 
+    def printTextAtCurrentPos(self,text):
+        """ Prints some plain text to the console """
+        self._insert_plain_text_into_buffer(self._get_cursor(), text)
+
     def executeCommand(self,command,hidden=False):
         """ Execute a command in the frame of the console widget """
         self._execute(command,hidden)

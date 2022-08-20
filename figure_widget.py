@@ -17,7 +17,7 @@ from matplotlib.figure import Figure
 from file_handler import savefile, RES_DIR
 
 import random, string
-from axeslinestool import BoolEdit
+from axeslinestool import BoolEdit, AliasButton
 
 screen_dpi = 72
 
@@ -33,6 +33,8 @@ class MyFigureCanvas(FigureCanvas):
     line_pasted = pyqtSignal(str,list)
     table_required = pyqtSignal(str,str)
     custom_loader = pyqtSignal(list)
+    alias_pasted = pyqtSignal(str,int,int,bool)
+    remove_required = pyqtSignal(int)
     def __init__(self,parent,toolbar):
         self.fig = Figure(dpi=screen_dpi)
         self.fig.add_subplot(111)
@@ -41,12 +43,13 @@ class MyFigureCanvas(FigureCanvas):
         self.setAcceptDrops(True)
         self.opacity = False
         self.setWindowFlags(Qt.Window)
-        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        # self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
+        # self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
         self.mpl_connect('key_press_event',self._keypressevent)
         self.parent_ = parent
         self.mytoolbar = toolbar
         self.setFocusPolicy(Qt.StrongFocus)
+        self.close_from_cui = False
 
     def set_window_title(self, id, prefix=None):
         if prefix != None:
@@ -120,6 +123,13 @@ class MyFigureCanvas(FigureCanvas):
 
     def dropEvent(self,event):
         event.accept()
+        if type(event.source()) == AliasButton:
+            alias = event.source().text()
+            mod = event.modifiers()
+            inaxes = self.inaxes(self.mouseEventCoords(event.position()))
+            if inaxes == None: return
+            self._move_plot(alias, inaxes, mod)
+            return
         mime = event.mimeData()
         if os.name == 'posix':
             filenames = mime.text().replace('file://','').replace('file:','').split('\n')
@@ -132,11 +142,13 @@ class MyFigureCanvas(FigureCanvas):
                 self.table_required.emit(file,DDHandler.delimiters[DDHandler.separator])
             elif DDHandler.type == "plot":
                 inaxes = self.inaxes(self.mouseEventCoords(event.position()))
+                if inaxes == None: return
                 self._open_newplot(file,inaxes)
             elif DDHandler.type == "ndarray":
                 self._open_newndarray(file)
             elif DDHandler.type == "customfunc":
                 inaxes = self.inaxes(self.mouseEventCoords(event.position()))
+                if inaxes == None: return
                 figaxid = self._identify_figaxid(inaxes)
                 lis = [DDHandler.functionname, file, inaxes, randomname(4), figaxid]
                 self.custom_loader.emit(lis)
@@ -144,7 +156,26 @@ class MyFigureCanvas(FigureCanvas):
     def focusInEvent(self, a0: QFocusEvent) -> None:
         self.mytoolbar.focused_canvas = self
         return super().focusInEvent(a0)
-           
+
+    def _move_plot(self, alias, ax, mod):
+        ax_id = self.fig.axes.index(ax)
+        self.alias_pasted.emit(alias, self.fig_id, ax_id, mod.name == 'ControlModifier')
+
+    def close_(self):
+        self.close_from_cui = True
+        self.close()
+        
+    def closeEvent(self, e):
+        if self.close_from_cui:
+            e.accept()
+        else:
+            reply = QMessageBox.question(self,'Exit',
+                                        "Are you sure to remove this figure?", QMessageBox.Yes | QMessageBox.No,
+                                        QMessageBox.Yes)
+            if reply == QMessageBox.Yes:
+                self.remove_required.emit(self.fig_id)
+                savefile.save_removefigure(self.fig_id)
+            e.ignore()
 
 class DDHandler(QDialog):
     type = "table"
@@ -258,6 +289,7 @@ class MyToolbar(QToolBar):
         self.toolitems = (
             ('Loader', 'Set loader type', os.path.join(RES_DIR,'dd'), 'loader'),
             ('Popup', 'Popup figures', os.path.join(RES_DIR,'popup'), 'popup'),
+            ('AddFigure', 'Add figure', os.path.join(RES_DIR,'addfigure'), 'addfigure'),
             ('AxesTool', 'Show AxesTool', os.path.join(RES_DIR,'axestool'), 'axestool'),
             ('LinesTool', 'Show LinesTool', os.path.join(RES_DIR,'linestool'), 'linestool'),
             (None, None, None, None),
@@ -302,11 +334,16 @@ class MyToolbar(QToolBar):
 
     def linestool(self):
         self.parent.linestool.show()
+        self.parent.linestool.load_lines()
         self.parent.linestool.raise_()
 
     def axestool(self):
         self.parent.axestool.show()
         self.parent.axestool.raise_()
+
+    def addfigure(self):
+        self.parent.add_figure()
+        savefile.save_addfigure()
 
     def back(self):
         self.mpl_toolbars[self.focused_canvas].back()

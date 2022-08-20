@@ -136,9 +136,21 @@ class SaveFiles():
         with open(self.logfilename,'a', encoding='utf-8') as f:
             print(f"set_lineproperties({line_id},{properties})",file=f)
 
-    def save_linemove(self, old_id, new_id):
+    def save_linemove(self, old_id, new_id, delete=True):
         with open(self.logfilename, "a", encoding='utf-8') as f:
-            print(f"move_line({old_id},{new_id})",file=f)
+            print(f"move_line({old_id},{new_id},{delete})",file=f)
+
+    def save_removeline(self, id_):
+        with open(self.logfilename, "a", encoding='utf-8') as f:
+            print(f"figs[{id_['figs']}].axes[{id_['axes']}].lines[{id_['axes']}].remove()",file=f)
+
+    def save_removefigure(self, id_):
+        with open(self.logfilename, "a", encoding='utf-8') as f:
+            print(f"remove_figure({id_})",file=f)
+
+    def save_addfigure(self):
+        with open(self.logfilename, "a", encoding='utf-8') as f:
+            print("add_figure()",file=f)
 
     def save_subplotsparam(self, is_tight, fig_id, parameters):
         with open(self.logfilename, "a", encoding='utf-8') as f:
