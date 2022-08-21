@@ -2,7 +2,27 @@ import random, pickle
 import sys, os, string, shutil
 import re, pathlib
 
-RES_DIR = os.path.join(os.path.dirname(sys.argv[0]),'png')
+class Envs():
+    RES_DIR = os.path.join(os.path.dirname(sys.argv[0]),'png')
+    LOGO = os.path.join(os.path.join(RES_DIR,"logo.png"))
+    EXE_DIR = os.path.join(os.path.dirname(sys.argv[0]))
+    ADDON_TEMPRATE_DIR = os.path.join(os.path.dirname(sys.argv[0]),'addon')
+    def __init__(self):
+        pass
+
+    def initialize(self, args):
+        if args.local:
+            self.JEMDIR = os.path.join(os.path.dirname(sys.argv[0]),"..","HOME")
+        else:
+            self.JEMDIR = os.path.join(os.path.expanduser('~'),"JEMViewer")
+        self.ADDON_DIR = os.path.join(self.JEMDIR,'addon')
+        self.PLTPLOFILE = os.path.join(self.ADDON_DIR,"default.mplstyle")
+        if os.name == "nt":
+            self.RUN = "start"
+        else:
+            self.RUN = "open"
+
+envs = Envs()
 
 class SaveFiles():
     def __init__(self):
@@ -24,15 +44,13 @@ class SaveFiles():
         with open(self.logfilename, 'w', encoding='utf-8') as f:
             pass
         
-    def save_command(self,command,fileparse=False):
-        exclude = ["edit()","initialize()", "update_command()","savefig"]
+    def save_command(self,command,fileparse=False,alias=True,exclude = ["edit()","reboot()","savefig"]):
         for e in exclude:
             if e in command:
                 return
         if fileparse:
             command = command.replace("'",'"')
             match = re.findall(r'"(.*?)"',command)
-            print(match)
             for filename in match:
                 if filename == '.':
                     continue
@@ -50,7 +68,8 @@ class SaveFiles():
                     command = command.replace('"{}"'.format(filename,),"os.path.join(savedir,\"{}\")".format(self.splittedfile(filename),))
         with open(self.logfilename,'a', encoding='utf-8') as f:
             print(command,file=f)
-            print("update_alias()",file=f)
+            if alias:
+                print("update_alias()",file=f)
 
     def save_npdata(self,new_name,data):
         pickle.dump(data,open(os.path.join(self.dirname,new_name),'wb'))
@@ -78,7 +97,6 @@ class SaveFiles():
         figaxid = lis[4]
         filename = os.path.abspath(filename)
         savedname = os.path.join(self.dirname, self.splittedfile(filename))
-        print(filename)
         os.makedirs(os.path.dirname(savedname),exist_ok=True)
         if os.path.isfile(filename):
             shutil.copy(filename,savedname)

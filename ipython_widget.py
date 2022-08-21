@@ -28,6 +28,9 @@ class IPythonWidget(RichIPythonWidget):
         kernel_client.start_channels()       
         self.exit_requested.connect(self.stop)
         self.error = False
+    
+    def focus_(self):
+        self._control.setFocus()
 
     def stop(self):
         self.kernel_client.stop_channels()
@@ -55,6 +58,7 @@ class IPythonWidget(RichIPythonWidget):
     def printTextAtCurrentPos(self,text):
         """ Prints some plain text to the console """
         self._insert_plain_text_into_buffer(self._get_cursor(), text)
+        self.focus_()
 
     def executeCommand(self,command,hidden=False):
         """ Execute a command in the frame of the console widget """

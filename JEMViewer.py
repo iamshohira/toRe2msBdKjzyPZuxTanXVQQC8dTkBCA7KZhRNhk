@@ -9,9 +9,8 @@ import numpy as np
 import glob
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from edit_widget import EditWidget, TempWidget
-from file_handler import savefile
+from file_handler import savefile, envs
 from datetime import datetime
 from matplotlib.lines import Line2D
 import subprocess
@@ -32,19 +31,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("filename", nargs='?', default=None, help="input filename")
 parser.add_argument("-l","--local", action="store_true")
 args = parser.parse_args()
-VSCODE = "/Applications/Visual Studio Code.app"
-run_command = ["open",VSCODE]
-jkndir = 'addon'
-EXE_DIR = os.path.join(os.path.dirname(sys.argv[0]))
-ADDON_TEMPRATE_DIR = os.path.join(os.path.dirname(sys.argv[0]),jkndir)
-if args.local:
-    JEMDIR = os.path.join(os.path.dirname(sys.argv[0]),"..","HOME")
-else:
-    JEMDIR = os.path.join(os.path.expanduser('~'),"JEMViewer")
-ADDON_DIR = os.path.join(JEMDIR,jkndir)
-RES_DIR = os.path.join(os.path.dirname(sys.argv[0]),'png')
-pltprofile = 'default.mplstyle'
-savefile.initialize(JEMDIR)
+envs.initialize(args)
 DEFAULT_NAMESPACE = {
     "np": np,
     "pickle": pickle,
@@ -54,8 +41,9 @@ DEFAULT_NAMESPACE = {
 EXIT_CODE_REBOOT = -11231351
 
 class MainWindow(QMainWindow):
-    def __init__(self, filepath=os.path.join(os.path.expanduser('~'),'Desktop'), parent=None):
+    def __init__(self, filepath, parent=None):
         super().__init__(parent)
+        self.force_close = False
         self.saved_command = ""
         self.window_id = randomname(4)
         self.setWindowTitle(f"JEMViewer2 id: {self.window_id}")
@@ -72,7 +60,6 @@ class MainWindow(QMainWindow):
         self.axestool = AxesTool(self.figs)
         self.toolbar = MyToolbar(self)
         self.add_figure()
-        self._set_initial_namespace()
         self.log_w = LogWidget(self,self.ns)
         self._create_main_window()
         self._set_slot()
@@ -100,18 +87,18 @@ class MainWindow(QMainWindow):
             filenames = mime.text().replace('file:///','').replace('file:','').split('\n')
         if ".jem2" in filenames[0]:
             self.filepath = filenames[0]
-            self._open()
+            self.reboot()
         super().dropEvent(event)
 
     def _load_helper(self):
-        with open(os.path.join(EXE_DIR,'helper_function.py'), 'r') as f:
+        with open(os.path.join(envs.EXE_DIR,'helper_function.py'), 'r') as f:
             command = f.read()
             if command not in self.saved_command:
                 self.ipython_w.executeCommand(command,hidden=True)
-                savefile.save_command(command)
+                # savefile.save_command(command, alias=False)
 
     def _load_user_py(self):
-        files = glob.glob(os.path.join(ADDON_DIR,"*.py"))
+        files = glob.glob(os.path.join(envs.ADDON_DIR,"*.py"))
         dependences = {}
         for fi in files:
             with open(fi, "r", encoding='utf-8') as f:
@@ -125,18 +112,18 @@ class MainWindow(QMainWindow):
         ts = graphlib.TopologicalSorter(dependences)
         for fn in ts.static_order():
             if fn == "": continue
-            fi = os.path.join(ADDON_DIR, fn)
+            fi = os.path.join(envs.ADDON_DIR, fn)
             with open(fi,'r', encoding='utf-8') as f:
                 command = f.read()
                 if command not in self.saved_command:
                     self.ipython_w.executeCommand(command,hidden=True)
-                    savefile.save_command(command)
+                    savefile.save_command(command, alias=False, exclude=[])
         self.ipython_w.executeCommand("",hidden=True)
 
     def _create_menubar(self):
         menubar = self.menuBar()
         filemenu = menubar.addMenu("&File")
-        save = QAction("&Save",self)
+        save = QAction( "&Save",self)
         save.setShortcut(QKeySequence.Save)
         save.triggered.connect(self.save)
         filemenu.addAction(save)
@@ -149,6 +136,10 @@ class MainWindow(QMainWindow):
         open_.triggered.connect(self.open)
         filemenu.addAction(open_)
 
+    def close_(self, force):
+        self.force_close = force
+        self.close()
+
     def closeEvent(self, event):
         def exit():
             savefile.remove_tmpdir()
@@ -157,7 +148,10 @@ class MainWindow(QMainWindow):
             self.linestool.close()
             self.axestool.close()
             event.accept()
-            
+
+        if self.force_close:
+            exit()
+            return            
         if '*' not in self.windowTitle():
             exit()
             return
@@ -289,8 +283,8 @@ class MainWindow(QMainWindow):
         savefile.save(self.filepath)
         
     def saveas(self):
-        # path = self.filepath if self.filepath is not None else os.path.join(os.path.expanduser('~'),'Desktop')
-        filepath = QFileDialog.getSaveFileName(self,"Project name",self.filepath,"JEM Viewer 2 file (*.jem2)")
+        path = self.filepath if self.filepath is not None else os.path.join(os.path.expanduser('~'),'Desktop')
+        filepath = QFileDialog.getSaveFileName(self,"Project name",path,"JEM Viewer 2 file (*.jem2)")
         if filepath[0] == '':
             return
         self.filepath = filepath[0]
@@ -303,22 +297,22 @@ class MainWindow(QMainWindow):
         if filepath[0] == '':
             return
         self.filepath = filepath[0]
-        self._open()
+        self.reboot()
 
-    def _open(self):
+    def reboot(self,force=False):
         for figure_w in self.figure_widgets:
             figure_w.close_()
         self.ipython_w.stop()
-        self.close()
+        self.close_(force)
         get_app_qt6().exit(EXIT_CODE_REBOOT)
 
     def _set_windowname(self):
         self.setWindowTitle(os.path.basename(self.filepath))
         for i, figure_w in enumerate(self.figure_widgets):
             figure_w.set_window_title(i, prefix=os.path.basename(self.filepath))
-            figure_w.get_default_filename = lambda: os.path.splitext(self.filepath)[0]
+            figure_w.get_default_filename = lambda: f"{os.path.splitext(self.filepath)[0]}.{figure_w.get_default_filetype()}"
 
-    def load(self):
+    def _load_savefile(self):
         if self.filepath != None:
             savefile.open(self.filepath)
             command = savefile.load()
@@ -368,12 +362,12 @@ class MainWindow(QMainWindow):
             "set_loader": DDHandler.set_loader,
             "savedir": savefile.dirname,
             "popup": self.raise_figure_widgets,
-            "initialize": self.initialize,
+            "reboot": lambda: self.reboot(force=True),
             "update_alias": self.update_alias,
             "show_data": self.show_datatable,
             "add_figure": self.add_figure,
             "remove_figure": self.remove_figure,
-            "addon_store": AddonInstaller(ADDON_DIR),
+            "addon_store": AddonInstaller(envs.ADDON_DIR),
             "set_lineproperties": self.linestool.set_properties,
             "move_line": self.linestool.move_line,
             "set_axesproperties": self.axestool.set_properties,
@@ -393,23 +387,18 @@ class MainWindow(QMainWindow):
         savefile.save_command(lastcommand,fileparse)
 
     def initialize(self):
-        # self.figure_w.fig.clear()
-        # self.figure_w.fig.subplots(1,1)
-        # self.ns["ax"] = self.figure_w.fig.axes[0]
+        savefile.initialize(envs.JEMDIR)
+        self._set_initial_namespace()
         self.update_alias() 
-        try:
-            savefile.make_commandfile()
-        except:
-            pass
         self._load_helper()
-        self.load()
-        savefile.save_command(datetime.now().strftime('\n# HEADER %Y-%m-%d %H:%M:%S\n'))
+        self._load_savefile()
+        savefile.save_command(datetime.now().strftime('\n# HEADER %Y-%m-%d %H:%M:%S\n'),alias=False)
         self._load_user_py()
-        savefile.save_command(datetime.now().strftime('\n# COMMAND LOG %Y-%m-%d %H:%M:%S\n'))
+        savefile.save_command(datetime.now().strftime('\n# COMMAND LOG %Y-%m-%d %H:%M:%S\n'),alias=False)
         self.update_alias()
 
     def direct_edit(self):
-        subprocess.run(run_command+[savefile.logfilename])
+        subprocess.run([envs.RUN, savefile.logfilename])
 
     def update_alias(self):
         alias = {}
@@ -456,15 +445,14 @@ def get_app_qt6(*args, **kwargs):
 
 def main():
     filename = args.filename
-    if not os.path.exists(ADDON_DIR):
-        os.makedirs(JEMDIR,exist_ok=True)
-        shutil.copytree(ADDON_TEMPRATE_DIR, ADDON_DIR)
-    pltpath = os.path.join(ADDON_DIR,pltprofile)
-    plt.style.use(pltpath)
+    if not os.path.exists(envs.ADDON_DIR):
+        os.makedirs(envs.JEMDIR, exist_ok=True)
+        shutil.copytree(envs.ADDON_TEMPRATE_DIR, envs.ADDON_DIR)
+    plt.style.use(envs.PLTPLOFILE)
 
     while True:
         app = get_app_qt6()
-        app.setWindowIcon(QIcon(os.path.join(RES_DIR,'logo.png')))
+        app.setWindowIcon(QIcon(envs.LOGO))
         form = MainWindow(filename)
         form.show()
         form.raise_()

@@ -14,7 +14,7 @@ from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as Navigation
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.lines import Line2D
 from matplotlib.figure import Figure
-from file_handler import savefile, RES_DIR
+from file_handler import savefile, envs
 
 import random, string
 from axeslinestool import BoolEdit, AliasButton
@@ -287,11 +287,11 @@ class MyToolbar(QToolBar):
         self.mpl_toolbars = {}
         self.parent = parent
         self.toolitems = (
-            ('Loader', 'Set loader type', os.path.join(RES_DIR,'dd'), 'loader'),
-            ('Popup', 'Popup figures', os.path.join(RES_DIR,'popup'), 'popup'),
-            ('AddFigure', 'Add figure', os.path.join(RES_DIR,'addfigure'), 'addfigure'),
-            ('AxesTool', 'Show AxesTool', os.path.join(RES_DIR,'axestool'), 'axestool'),
-            ('LinesTool', 'Show LinesTool', os.path.join(RES_DIR,'linestool'), 'linestool'),
+            ('Loader', 'Set loader type', os.path.join(envs.RES_DIR,'dd'), 'loader'),
+            ('Popup', 'Popup figures', os.path.join(envs.RES_DIR,'popup'), 'popup'),
+            ('AddFigure', 'Add figure', os.path.join(envs.RES_DIR,'addfigure'), 'addfigure'),
+            ('AxesTool', 'Show AxesTool', os.path.join(envs.RES_DIR,'axestool'), 'axestool'),
+            ('LinesTool', 'Show LinesTool', os.path.join(envs.RES_DIR,'linestool'), 'linestool'),
             (None, None, None, None),
             ('Home', 'Reset original view', 'home', 'home'),
             ('Back', 'Back to previous view', 'back', 'back'),
@@ -305,7 +305,7 @@ class MyToolbar(QToolBar):
             ('Subplots', 'Configure subplots', 'subplots', 'configure_subplots'),
             (None, None, None, None),
             ('Save', 'Save the figure', 'filesave', 'save_figure'),
-            ('SaveAnim', 'Save figures for ppt animation', os.path.join(RES_DIR,'savefiganim'), 'save_figure_for_animation'),
+            ('SaveAnim', 'Save figures for ppt animation', os.path.join(envs.RES_DIR,'savefiganim'), 'save_figure_for_animation'),
         )
         self.actions = {} 
         dummybar = NavigationToolbar(FigureCanvas(), None)
