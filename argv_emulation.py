@@ -298,8 +298,9 @@ def _run_argvemulator(timeout=60):
 
 
 if __name__ == "__main__":
-    from JEMViewer import main
     _run_argvemulator()
+    #エミュレートの後に呼ばないとArgParserに反映されない
+    from JEMViewer import main
     main()
     # path = os.path.join(os.path.dirname(sys.argv[0]),"JEMViewer.py")
     # with open(path, "r", encoding="UTF-8") as f:
