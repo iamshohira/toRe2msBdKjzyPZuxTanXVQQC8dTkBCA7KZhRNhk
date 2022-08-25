@@ -2,6 +2,7 @@ import requests
 from prettytable import PrettyTable
 import os, webbrowser
 import pickle
+import subprocess
 
 class AddonInstaller:
     def __init__(self, addon_dir):
@@ -87,3 +88,17 @@ class AddonInstaller:
                 return
         for k in self.addons.keys():
             self.install(k)
+
+    def open_dir(self):
+        if os.name == "nt":
+            run = "start"
+        else:
+            run = "open"
+        subprocess.run([run, self.addon_dir])
+
+    def open_vscode(self):
+        try:
+            subprocess.run(["code", self.addon_dir])
+        except:
+            pass
+

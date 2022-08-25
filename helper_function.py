@@ -129,6 +129,7 @@ def set_font(fontname,axis=None):
                 text.set_fontname(fontname)
         for t in axis.texts:
             t.set_fontname(fontname)
+        axis.title.set_fontname(fontname)
 
 # def savefig_for_animation(baseplots, animationplots, axis=ax, framecolor='black'):
 #     """write separated figures for graph animation in powerpoint
@@ -242,7 +243,7 @@ def font_dialog(axis=None):
     from matplotlib import font_manager
     import difflib
     import os
-    fm = font_manager.FontManager()
+    fm = font_manager.fontManager
     familylist = [f.name for f in fm.afmlist]
     familylist.extend([f.name for f in fm.ttflist])
     familylist = list(set(familylist))
