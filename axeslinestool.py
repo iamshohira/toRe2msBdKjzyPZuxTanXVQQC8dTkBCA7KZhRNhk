@@ -114,8 +114,11 @@ class ColorString(StrEdit):
     def _text_changed(self, color):
         if self.ns != None:
             if color in self.ns.keys():
-                color = self.ns[color]
-                self.setText(color)
+                obj = self.ns[color]
+                if type(obj) == str:
+                    if obj[0] == "#":
+                        color = obj
+                        self.setText(color)
         self.textChanged_.emit(color)
         
 class ColorEdit(QWidget):
