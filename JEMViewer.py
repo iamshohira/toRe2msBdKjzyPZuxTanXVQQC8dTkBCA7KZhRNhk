@@ -56,7 +56,7 @@ class MainWindow(QMainWindow):
         self.ns = self.ipython_w.ns
         self.figure_widgets = []
         self.figs = []
-        self.linestool = LinesTool(self.figs)
+        self.linestool = LinesTool(self.figs, self.ns)
         self.axestool = AxesTool(self.figs)
         self.toolbar = MyToolbar(self)
         self.add_figure()

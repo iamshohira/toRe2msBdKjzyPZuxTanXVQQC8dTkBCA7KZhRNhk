@@ -102,16 +102,31 @@ class ColorButton(QPushButton):
             self.color = color
             stylesheet = "background-color: %s;border: 1px solid; border-color: gray" % color
             self.setStyleSheet(stylesheet)
+
+class ColorString(StrEdit):
+    textChanged_ = pyqtSignal(str)
+
+    def __init__(self, ns, parent=None, initial=None):
+        super().__init__(parent, initial)
+        self.ns = ns
+        self.textChanged.connect(self._text_changed)
+    
+    def _text_changed(self, color):
+        if self.ns != None:
+            if color in self.ns.keys():
+                color = self.ns[color]
+                self.setText(color)
+        self.textChanged_.emit(color)
         
 class ColorEdit(QWidget):
     changed = pyqtSignal()
-    def __init__(self, parent=None, initial=None):
+    def __init__(self, parent=None, initial=None, ns=None):
         super().__init__(parent)
-        self.edit = StrEdit(initial=initial)
+        self.edit = ColorString(ns, initial=initial)
         self.edit.setFixedWidth(60)
         self.btn = ColorButton(inicolor=initial)
         self.btn.colorPicked.connect(lambda color: self.edit.setText(color))
-        self.edit.textChanged.connect(self.btn.set_color)
+        self.edit.textChanged_.connect(self.btn.set_color)
         self.btn.setFixedWidth(20)
         layout = QHBoxLayout()
         layout.addWidget(self.edit)
@@ -178,7 +193,7 @@ class AliasButton(QPushButton):
 class LinesTool(QTableWidget):
     line_moved = pyqtSignal()
     alias_clicked = pyqtSignal(str)
-    def __init__(self, figs):
+    def __init__(self, figs, ns):
         super().__init__()
         # self.header = ["show","figs","axes","lines","alias","zorder","label","memo","line style","width","line color","marker","size","marker color","edge","edge color"]
         self.header = ["show","alias","zorder","label","memo","line style","width","line color","marker","size","marker color","edge","edge color"]
@@ -187,6 +202,7 @@ class LinesTool(QTableWidget):
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContentsOnFirstShow)
         self.figs = figs
+        self.ns = ns
         self.load_lines()
         self.setWindowTitle("LinesTool")
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -221,7 +237,7 @@ class LinesTool(QTableWidget):
             obj = AliasButton(initial=initial)
             obj.clicked.connect(lambda: self.alias_clicked.emit(obj.text()))
         elif type == "color":
-            obj = ColorEdit(initial=initial)
+            obj = ColorEdit(initial=initial, ns=self.ns)
         obj.row = self.row_id
         obj.changed.connect(self.update)
         self.setCellWidget(self.row_id, self.column_id, obj)
