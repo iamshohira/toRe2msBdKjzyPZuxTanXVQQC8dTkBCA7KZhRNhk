@@ -221,27 +221,29 @@ class MainWindow(QMainWindow):
         else:
             wid.show()    
 
-    def add_mdiwindow(self, widget):
+    def add_mdiwindow(self, widget, title=None):
         if mode == dockstyle:
             sub = QMdiSubWindow()
             sub.setWidget(widget)
             self.mdi.addSubWindow(sub)
             sub.show()
             self.mdiwindows[widget] = sub
+            if title != None:
+                sub.setWindowTitle(title)
         else:
             widget.show()
 
     def _create_main_window(self):
         if mode == dockstyle:
             self.mdi = QMdiArea(self)
-            self.addToolBar(self.toolbar)
+            self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolbar)
             self.add_essential_dock("console", self.ipython_w, Qt.DockWidgetArea.LeftDockWidgetArea)
             self.add_essential_dock("log", self.log_w, Qt.DockWidgetArea.LeftDockWidgetArea)
             self.add_essential_dock("axestool",self.axestool, Qt.DockWidgetArea.BottomDockWidgetArea)
             self.add_essential_dock("linestool",self.linestool, Qt.DockWidgetArea.BottomDockWidgetArea)
             self.setCentralWidget(self.mdi)
         else:
-            self.addToolBar(self.toolbar)
+            self.addToolBar(Qt.ToolBarArea.TopToolBarArea, self.toolbar)
             splitter = QSplitter()
             splitter.addWidget(self.log_w)
             splitter.addWidget(self.ipython_w)
