@@ -169,12 +169,21 @@ class MyFigureCanvas(FigureCanvas):
         if self.close_from_cui:
             e.accept()
         else:
-            reply = QMessageBox.question(self,'Exit',
-                                        "Are you sure to remove this figure?", QMessageBox.Yes | QMessageBox.No,
-                                        QMessageBox.Yes)
-            if reply == QMessageBox.Yes:
+            msg = QMessageBox()
+            msg.setWindowTitle("Remove")
+            msg.setText("Are you sure to remove this figure?\n or close JEM viewer?")
+            msg.setIcon(QMessageBox.Icon.Question)
+            rem = msg.addButton("Remove figure", QMessageBox.ButtonRole.AcceptRole)
+            cancel = msg.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
+            close = msg.addButton("Close JEM", QMessageBox.ButtonRole.ActionRole)
+            msg.setDefaultButton(cancel)
+            msg.exec()
+
+            if msg.clickedButton() == rem:
                 self.remove_required.emit(self.fig_id)
                 savefile.save_removefigure(self.fig_id)
+            elif msg.clickedButton() == close:
+                self.parent_.close()
             e.ignore()
 
 class DDHandler(QDialog):
