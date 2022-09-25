@@ -162,7 +162,7 @@ class SaveFiles():
 
     def save_removeline(self, id_):
         with open(self.logfilename, "a", encoding='utf-8') as f:
-            print(f"figs[{id_['figs']}].axes[{id_['axes']}].lines[{id_['axes']}].remove()",file=f)
+            print(f"figs[{id_['figs']}].axes[{id_['axes']}].lines[{id_['lines']}].remove()",file=f)
             print(f"update_legend()",file=f)
 
     def save_removefigure(self, id_):

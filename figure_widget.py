@@ -355,27 +355,43 @@ class MyToolbar(QToolBar):
         savefile.save_addfigure()
 
     def back(self):
+        self.pop_message()    
         self.mpl_toolbars[self.focused_canvas].back()
 
     def forward(self):
+        if self.focused_canvas == None:
+            self.pop_message()
+            return
         self.mpl_toolbars[self.focused_canvas].forward()
 
     def configure_subplots(self):
+        if self.focused_canvas == None:
+            self.pop_message()
+            return
         if not MySubplotToolQt.active:
             self._subplot_dialog = MySubplotToolQt(self.focused_canvas, self)
         self._subplot_dialog.show()
         self._subplot_dialog.raise_()
 
     def save_figure(self):
+        if self.focused_canvas == None:
+            self.pop_message()
+            return
         self.mpl_toolbars[self.focused_canvas].save_figure()
 
     def save_figure_for_animation(self):
+        if self.focused_canvas == None:
+            self.pop_message()
+            return
         if not SaveForAnimationDialog.active:
             self._savefiganim_dialog = SaveForAnimationDialog(self.focused_canvas, self)
         self._savefiganim_dialog.show()
         self._savefiganim_dialog.raise_()
 
     def home(self):
+        if self.focused_canvas == None:
+            self.pop_message()
+            return
         self.mpl_toolbars[self.focused_canvas].home()
 
     def zoom(self):
@@ -403,7 +419,10 @@ class MyToolbar(QToolBar):
 
     def remove_canvas(self, canvas):
         self.mpl_toolbars.pop(canvas)
+        self.focused_canvas = None
 
+    def pop_message(self):
+        QMessageBox.critical(self,"Error","Please focus a figure widget.")
 
 class MySubplotToolQt(SubplotToolQt):
     active = False
