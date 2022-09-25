@@ -109,7 +109,9 @@ class TempWidget(QTableWidget):
                 minrow = ran.topRow()
             if maxrow < ran.bottomRow():
                 maxrow = ran.bottomRow()
-        cols = list(set(cols))
+        # print(cols)
+        # cols = list(set(cols))
+        # print(cols)
         self.clipboard.setText(self._parse_data(minrow,maxrow,cols))
 
     def keyPressEvent(self, event):
