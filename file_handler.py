@@ -153,14 +153,17 @@ class SaveFiles():
     def save_lineproperties(self, line_id, properties):
         with open(self.logfilename,'a', encoding='utf-8') as f:
             print(f"set_lineproperties({line_id},{properties})",file=f)
+            print(f"update_legend()",file=f)
 
     def save_linemove(self, old_id, new_id, delete=True):
         with open(self.logfilename, "a", encoding='utf-8') as f:
             print(f"move_line({old_id},{new_id},{delete})",file=f)
+            print(f"update_legend()",file=f)
 
     def save_removeline(self, id_):
         with open(self.logfilename, "a", encoding='utf-8') as f:
             print(f"figs[{id_['figs']}].axes[{id_['axes']}].lines[{id_['axes']}].remove()",file=f)
+            print(f"update_legend()",file=f)
 
     def save_removefigure(self, id_):
         with open(self.logfilename, "a", encoding='utf-8') as f:

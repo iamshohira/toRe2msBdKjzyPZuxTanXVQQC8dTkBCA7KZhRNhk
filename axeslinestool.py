@@ -210,6 +210,10 @@ class LinesTool(QTableWidget):
         self.setWindowTitle("LinesTool")
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextmenu)
+        self.legend_autoupdate(True)
+
+    def legend_autoupdate(self, b):
+        self._legend_autoupdate = b
 
     def fit_size(self):
         self.setMinimumWidth(self.horizontalHeader().length()+40)
@@ -318,6 +322,7 @@ class LinesTool(QTableWidget):
         id_ = self.get_id(line)
         # if old_id["figs"] == values["figs"] and old_id["axes"] == values["axes"]:
         self.set_properties(id_, values)
+        self.update_legend()
         savefile.save_lineproperties(id_, values)
         self.figs[id_["figs"]].canvas.draw()
         # else:
@@ -351,6 +356,18 @@ class LinesTool(QTableWidget):
         line.set_markeredgewidth(values["edge"])
         line.set_markeredgecolor(values["edge color"])
 
+    def update_legend(self):
+        if not self._legend_autoupdate: return
+        for fig in self.figs:
+            for ax in fig.axes:
+                if (ol := ax.get_legend()) == None: continue
+                fs = ol._fontsize
+                loc = ol._loc
+                drag = ol._draggable is not None
+                nl = ax.legend(fontsize=fs)
+                nl._set_loc(loc)
+                nl.set_draggable(drag)
+
     def move_line(self, old_id, new_id, delete=True):
         line = self.figs[old_id["figs"]].axes[old_id["axes"]].lines[old_id["lines"]]
         new_line, = self.figs[new_id["figs"]].axes[new_id["axes"]].plot(*line.get_data())
@@ -383,6 +400,7 @@ class LinesTool(QTableWidget):
         line = self.lines[irow]
         old_id = self.get_id(line)
         self.move_line(old_id, old_id, delete=False)
+        self.update_legend()
         savefile.save_linemove(old_id, old_id, delete=False)
         self.figs[old_id["figs"]].canvas.draw()
         self.load_lines()
@@ -392,6 +410,7 @@ class LinesTool(QTableWidget):
         line = self.lines[irow]
         old_id = self.get_id(line)
         line.remove()
+        self.update_legend()
         savefile.save_removeline(old_id)
         self.figs[old_id["figs"]].canvas.draw()
         self.load_lines()
@@ -408,6 +427,7 @@ class LinesTool(QTableWidget):
             "axes": ax_id,
         }
         self.move_line(old_id, new_id, delete = not is_copy)
+        self.update_legend()
         savefile.save_linemove(old_id, new_id, delete = not is_copy)
         self.figs[old_id["figs"]].canvas.draw()
         self.figs[new_id["figs"]].canvas.draw()

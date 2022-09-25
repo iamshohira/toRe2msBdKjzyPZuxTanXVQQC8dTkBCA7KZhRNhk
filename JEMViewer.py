@@ -370,8 +370,10 @@ class MainWindow(QMainWindow):
             "addon_store": AddonInstaller(envs.ADDON_DIR),
             "set_lineproperties": self.linestool.set_properties,
             "move_line": self.linestool.move_line,
+            "update_legend": self.linestool.update_legend,
             "set_axesproperties": self.axestool.set_properties,
-            "JEMViewer": self.update_checker
+            "JEMViewer": self.update_checker,
+            "legend_autoupdate": self.linestool.legend_autoupdate,
         }
         self.ns.update(DEFAULT_NAMESPACE)
         self.ns.update(namespace)
