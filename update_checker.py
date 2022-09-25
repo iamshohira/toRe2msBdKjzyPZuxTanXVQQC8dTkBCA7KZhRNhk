@@ -1,4 +1,8 @@
-import os, sys
+import os, sys, pickle
+import requests
+import webbrowser
+from file_handler import envs
+
 try:
     import git
     import_failed = False
@@ -8,6 +12,8 @@ except ImportError:
 class UpdateChecker:
     def __init__(self):
         self.can_update = False
+        self.urls = None
+        self.load_url()
         self.header = "\nJEMViewer 2\n"
         if import_failed:
             self.header += "You need to install git to manage software version.\n"
@@ -43,6 +49,50 @@ class UpdateChecker:
                 self.header += "Please visit the manual site to upgrade the software.\n\n"
     
     def update(self):
-        self.repo.git.checkout(self.latest_tag,force=True)
-        print("Update completed.")
-        print("Please restart JEMViewer.")
+        if self.urls != None:
+            webbrowser.open_new(self.urls["updatelog"])
+        if self.can_update:
+            self.repo.git.checkout(self.latest_tag,force=True)
+            print("Update completed.")
+            print("Please restart JEMViewer.")
+        else:
+            print("This is the latest version.")
+        
+    def load_url(self):
+        token_file = os.path.join(envs.ADDON_DIR, "notion_token")
+        if not os.path.exists(token_file): return
+        with open(token_file,"rb") as f:
+            access_token, db_id = pickle.load(f)
+        geturl = "https://api.notion.com/v1/databases/" + db_id + "/query" 
+        headers = {
+            "Authorization": access_token,
+            "Content-Type": "application/json",
+            "Notion-Version": "2021-08-16",
+        }
+        r = requests.post(geturl, headers=headers)
+        getdata = r.json()
+        res = getdata["results"]
+        self.urls = {}
+        for data in res:
+            obj = data["properties"]
+            try:
+                if obj["Status"]["select"]["name"] != "archive":
+                    continue
+            except:
+                pass
+            try:
+                name = obj["名前"]["title"][0]["plain_text"]
+            except:
+                continue
+            try:
+                url = obj["一言説明"]["rich_text"][0]["plain_text"]
+            except:
+                url = ""
+            self.urls[name] = url
+        return True
+
+    def manual(self):
+        if self.urls != None:
+            webbrowser.open_new(self.urls["toppage"])
+        else:
+            print("You need to activate addon_store first.\nPlease check the manual site.")

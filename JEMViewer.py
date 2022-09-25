@@ -371,9 +371,8 @@ class MainWindow(QMainWindow):
             "set_lineproperties": self.linestool.set_properties,
             "move_line": self.linestool.move_line,
             "set_axesproperties": self.axestool.set_properties,
+            "JEMViewer": self.update_checker
         }
-        if self.update_checker.can_update:
-            namespace["JEMViewer"] = self.update_checker
         self.ns.update(DEFAULT_NAMESPACE)
         self.ns.update(namespace)
 
