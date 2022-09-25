@@ -27,6 +27,11 @@ if os.name == "nt": #windows
     plugin_path = os.path.join(dirname, "Qt6", "plugins", "platforms")
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = plugin_path
 
+floatstyle = "Floating style"
+dockstyle = "Docking style"
+modes = [floatstyle, dockstyle]
+mode = floatstyle
+
 parser = argparse.ArgumentParser()
 parser.add_argument("filename", nargs='?', default=None, help="input filename")
 parser.add_argument("-l","--local", action="store_true")
@@ -43,11 +48,15 @@ EXIT_CODE_REBOOT = -11231351
 class MainWindow(QMainWindow):
     def __init__(self, filepath, parent=None):
         super().__init__(parent)
+        self.bar = self.statusBar()
+        self.bar.setText = self.bar.showMessage
+        self.mdiwindows = {}
         self.force_close = False
         self.saved_command = ""
         self.window_id = randomname(4)
         self.setWindowTitle(f"JEMViewer2 id: {self.window_id}")
-        self.setGeometry(300, 300, 800, 500)
+        if mode == floatstyle:
+            self.setGeometry(300, 300, 800, 500)
         self.filepath = filepath
         self.update_checker = UpdateChecker()
         # if filepath != None:
@@ -56,17 +65,17 @@ class MainWindow(QMainWindow):
         self.ns = self.ipython_w.ns
         self.figure_widgets = []
         self.figs = []
-        self.linestool = LinesTool(self.figs, self.ns)
-        self.axestool = AxesTool(self.figs)
-        self.toolbar = MyToolbar(self)
-        self.add_figure()
+        self.linestool = LinesTool(self.figs, self.ns, mode == floatstyle)
+        self.axestool = AxesTool(self.figs, mode == floatstyle)
+        self.toolbar = MyToolbar(self, mode == floatstyle)
         self.log_w = LogWidget(self,self.ns)
         self._create_main_window()
+        self.add_figure()
         self._set_slot()
         self._create_menubar()
         self.setAcceptDrops(True)
         self.initialize()
-            
+
     def print_log(self,item):
         self.ipython_w.clearPrompt()
         self.ipython_w.printTextInBuffer(item.text())
@@ -135,6 +144,31 @@ class MainWindow(QMainWindow):
         open_.setShortcut(QKeySequence.Open)
         open_.triggered.connect(self.open)
         filemenu.addAction(open_)
+        modemenu = menubar.addMenu("&Mode")
+        group = QActionGroup(modemenu)
+        for m in modes:
+            action = QAction(m, modemenu, checkable=True, checked=m==mode)
+            modemenu.addAction(action)
+            group.addAction(action)
+        group.setExclusive(True)
+        group.triggered.connect(self.mode_switched)
+        if mode == dockstyle:
+            sortmenu = menubar.addMenu("&Sort")
+            sortmenu.addAction("Cascade")
+            sortmenu.addAction("Tile")
+            sortmenu.triggered[QAction].connect(self.mdiaction)
+
+    def mdiaction(self, q):
+        if q.text() == "Cascade":
+            self.mdi.cascadeSubWindows()
+        if q.text() == "Tile":
+            self.mdi.tileSubWindows()
+
+    def mode_switched(self, action):
+        global mode
+        if mode == action.text(): return
+        mode = action.text()
+        self.reboot()
 
     def close_(self, force):
         self.force_close = force
@@ -166,18 +200,52 @@ class MainWindow(QMainWindow):
         else:
             event.ignore()    
 
+    def add_essential_dock(self, title, wid, pos):
+        dock = QDockWidget(title, self)
+        dock.setWidget(wid)
+        self.addDockWidget(pos, dock)
+        dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable |  QDockWidget.DockWidgetFeature.DockWidgetMovable )
+        return dock
+    
+    def add_dock(self, wid, title="", pos="right"):
+        if mode == dockstyle:
+            posdic = {
+                "top": Qt.DockWidgetArea.TopDockWidgetArea,
+                "left": Qt.DockWidgetArea.LeftDockWidgetArea,
+                "right": Qt.DockWidgetArea.RightDockWidgetArea,
+                "bottom": Qt.DockWidgetArea.BottomDockWidgetArea,
+            }
+            dock = QDockWidget(title, self)
+            dock.setWidget(wid)
+            self.addDockWidget(posdic[pos], dock)
+        else:
+            wid.show()    
+
+    def add_mdiwindow(self, widget):
+        if mode == dockstyle:
+            sub = QMdiSubWindow()
+            sub.setWidget(widget)
+            self.mdi.addSubWindow(sub)
+            sub.show()
+            self.mdiwindows[widget] = sub
+        else:
+            widget.show()
+
     def _create_main_window(self):
-        layout = QVBoxLayout()
-        layout3 = QHBoxLayout()
-        layout3.addWidget(self.toolbar)
-        layout.addLayout(layout3)
-        layout2 = QSplitter()
-        layout2.addWidget(self.log_w)
-        layout2.addWidget(self.ipython_w)
-        layout.addWidget(layout2)
-        widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
+        if mode == dockstyle:
+            self.mdi = QMdiArea(self)
+            self.addToolBar(self.toolbar)
+            self.add_essential_dock("console", self.ipython_w, Qt.DockWidgetArea.LeftDockWidgetArea)
+            self.add_essential_dock("log", self.log_w, Qt.DockWidgetArea.LeftDockWidgetArea)
+            self.add_essential_dock("axestool",self.axestool, Qt.DockWidgetArea.BottomDockWidgetArea)
+            self.add_essential_dock("linestool",self.linestool, Qt.DockWidgetArea.BottomDockWidgetArea)
+            self.setCentralWidget(self.mdi)
+        else:
+            self.addToolBar(self.toolbar)
+            splitter = QSplitter()
+            splitter.addWidget(self.log_w)
+            splitter.addWidget(self.ipython_w)
+            self.setCentralWidget(splitter)
 
     def raise_figure_widgets(self):
         for figure_w in self.figure_widgets:
@@ -213,7 +281,7 @@ class MainWindow(QMainWindow):
         figure_w.custom_loader.connect(self.update_alias)
         figure_w.alias_pasted.connect(self.linestool.move_by_drag)
         figure_w.remove_required.connect(self.remove_figure)
-        figure_w.show()
+        self.add_mdiwindow(figure_w)
         self.toolbar.add_canvas(figure_w)
         self.figure_widgets.append(figure_w)
         self.figs.append(figure_w.fig)
@@ -235,6 +303,8 @@ class MainWindow(QMainWindow):
         figure_w.alias_pasted.disconnect(self.linestool.move_by_drag)
         figure_w.remove_required.disconnect(self.remove_figure)
         figure_w.close_()
+        if mode == dockstyle:
+            self.mdi.removeSubWindow(self.mdiwindows[figure_w])
         for i, figure_w in enumerate(self.figure_widgets):
             figure_w.set_window_title(id=i)
         self.update_alias()
@@ -328,13 +398,13 @@ class MainWindow(QMainWindow):
         if type(data) == Line2D:
             data = np.vstack(data.get_data())
         self.editwidget = EditWidget(data.T)
-        self.editwidget.show()   
+        self.add_mdiwindow(self.editwidget)
     
     @pyqtSlot(str,str)
     def open_tablewidget(self,filename,sep):
         self.tempwidget = TempWidget(filename,sep)
         self.tempwidget.setGeometry(self.geometry().left(),self.geometry().top(),self.geometry().width(),self.geometry().height())
-        self.tempwidget.show()
+        self.add_mdiwindow(self.tempwidget)
 
     @pyqtSlot(list)
     def run_custom_loader(self,lis):
@@ -374,6 +444,8 @@ class MainWindow(QMainWindow):
             "set_axesproperties": self.axestool.set_properties,
             "JEMViewer": self.update_checker,
             "legend_autoupdate": self.linestool.legend_autoupdate,
+            "add_dock": self.add_dock,
+            "add_mdi": self.add_mdiwindow,
         }
         self.ns.update(DEFAULT_NAMESPACE)
         self.ns.update(namespace)

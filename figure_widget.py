@@ -291,36 +291,57 @@ class DDHandler(QDialog):
 
 
 class MyToolbar(QToolBar):
-    def __init__(self, parent):
+    def __init__(self, parent, tools = True):
         super().__init__(parent)
         self.mpl_toolbars = {}
         self.parent = parent
-        self.toolitems = (
-            ('Loader', 'Set loader type', os.path.join(envs.RES_DIR,'dd'), 'loader'),
-            ('Popup', 'Popup figures', os.path.join(envs.RES_DIR,'popup'), 'popup'),
-            ('AddFigure', 'Add figure', os.path.join(envs.RES_DIR,'addfigure'), 'addfigure'),
-            ('AxesTool', 'Show AxesTool', os.path.join(envs.RES_DIR,'axestool'), 'axestool'),
-            ('LinesTool', 'Show LinesTool', os.path.join(envs.RES_DIR,'linestool'), 'linestool'),
-            (None, None, None, None),
-            ('Home', 'Reset original view', 'home', 'home'),
-            ('Back', 'Back to previous view', 'back', 'back'),
-            ('Forward', 'Forward to next view', 'forward', 'forward'),
-            (None, None, None, None),
-            ('Pan',
-            'Left button pans, Right button zooms\n'
-            'x/y fixes axis, CTRL fixes aspect',
-            'move', 'pan'),
-            ('Zoom', 'Zoom to rectangle\nx/y fixes axis', 'zoom_to_rect', 'zoom'),
-            ('Subplots', 'Configure subplots', 'subplots', 'configure_subplots'),
-            (None, None, None, None),
-            ('Save', 'Save the figure', 'filesave', 'save_figure'),
-            ('SaveAnim', 'Save figures for ppt animation', os.path.join(envs.RES_DIR,'savefiganim'), 'save_figure_for_animation'),
-        )
+        if tools:
+            self.toolitems = (
+                ('Loader', 'Set loader type', os.path.join(envs.RES_DIR,'dd'), 'loader'),
+                ('Popup', 'Popup figures', os.path.join(envs.RES_DIR,'popup'), 'popup'),
+                ('AddFigure', 'Add figure', os.path.join(envs.RES_DIR,'addfigure'), 'addfigure'),
+                ('AxesTool', 'Show AxesTool', os.path.join(envs.RES_DIR,'axestool'), 'axestool'),
+                ('LinesTool', 'Show LinesTool', os.path.join(envs.RES_DIR,'linestool'), 'linestool'),
+                (None, None, None, None),
+                ('Home', 'Reset original view', 'home', 'home'),
+                ('Back', 'Back to previous view', 'back', 'back'),
+                ('Forward', 'Forward to next view', 'forward', 'forward'),
+                (None, None, None, None),
+                ('Pan',
+                'Left button pans, Right button zooms\n'
+                'x/y fixes axis, CTRL fixes aspect',
+                'move', 'pan'),
+                ('Zoom', 'Zoom to rectangle\nx/y fixes axis', 'zoom_to_rect', 'zoom'),
+                ('Subplots', 'Configure subplots', 'subplots', 'configure_subplots'),
+                (None, None, None, None),
+                ('Save', 'Save the figure', 'filesave', 'save_figure'),
+                ('SaveAnim', 'Save figures for ppt animation', os.path.join(envs.RES_DIR,'savefiganim'), 'save_figure_for_animation'),
+            )
+        else:
+            self.toolitems = (
+                ('Loader', 'Set loader type', os.path.join(envs.RES_DIR,'dd'), 'loader'),
+                ('AddFigure', 'Add figure', os.path.join(envs.RES_DIR,'addfigure'), 'addfigure'),
+                (None, None, None, None),
+                ('Home', 'Reset original view', 'home', 'home'),
+                ('Back', 'Back to previous view', 'back', 'back'),
+                ('Forward', 'Forward to next view', 'forward', 'forward'),
+                (None, None, None, None),
+                ('Pan',
+                'Left button pans, Right button zooms\n'
+                'x/y fixes axis, CTRL fixes aspect',
+                'move', 'pan'),
+                ('Zoom', 'Zoom to rectangle\nx/y fixes axis', 'zoom_to_rect', 'zoom'),
+                ('Subplots', 'Configure subplots', 'subplots', 'configure_subplots'),
+                (None, None, None, None),
+                ('Save', 'Save the figure', 'filesave', 'save_figure'),
+                ('SaveAnim', 'Save figures for ppt animation', os.path.join(envs.RES_DIR,'savefiganim'), 'save_figure_for_animation'),
+            )
         self.actions = {} 
         dummybar = NavigationToolbar(FigureCanvas(), None)
-        self.loc_label = QLabel("", self)
-        self.loc_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        self.loc_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
+        self.loc_label = self.parent.bar
+        # self.loc_label = QLabel("", self)
+        # self.loc_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        # self.loc_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
 
         for text, tooltip_text, image_file, callback in self.toolitems:
             if text is None:
@@ -332,8 +353,8 @@ class MyToolbar(QToolBar):
                     a.setCheckable(True)
                 if tooltip_text is not None:
                     a.setToolTip(tooltip_text)
-        label = self.addWidget(self.loc_label)
-        label.setVisible(True)
+        #label = self.addWidget(self.loc_label)
+        #label.setVisible(True)
 
     def loader(self):
         DDHandler.show(self)

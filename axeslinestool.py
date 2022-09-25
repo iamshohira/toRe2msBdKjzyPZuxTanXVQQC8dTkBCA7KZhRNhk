@@ -196,8 +196,9 @@ class AliasButton(QPushButton):
 class LinesTool(QTableWidget):
     line_moved = pyqtSignal()
     alias_clicked = pyqtSignal(str)
-    def __init__(self, figs, ns):
+    def __init__(self, figs, ns, fixsize = True):
         super().__init__()
+        self.fixsize = fixsize
         # self.header = ["show","figs","axes","lines","alias","zorder","label","memo","line style","width","line color","marker","size","marker color","edge","edge color"]
         self.header = ["show","alias","zorder","label","memo","line style","width","line color","marker","size","marker color","edge","edge color"]
         self.setColumnCount(len(self.header))
@@ -216,14 +217,15 @@ class LinesTool(QTableWidget):
         self._legend_autoupdate = b
 
     def fit_size(self):
-        self.setMinimumWidth(self.horizontalHeader().length()+40)
-        self.setMaximumWidth(self.horizontalHeader().length()+40)
-        self.setMinimumWidth(100)
-        height = self.verticalHeader().length()+40
-        height = height if height < 400 else 400
-        self.setMinimumHeight(height)
-        self.setMaximumHeight(self.verticalHeader().length()+40)
-        self.setMinimumWidth(100)
+        if self.fixsize:
+            self.setMinimumWidth(self.horizontalHeader().length()+40)
+            self.setMaximumWidth(self.horizontalHeader().length()+40)
+            self.setMinimumWidth(100)
+            height = self.verticalHeader().length()+40
+            height = height if height < 400 else 400
+            self.setMinimumHeight(height)
+            self.setMaximumHeight(self.verticalHeader().length()+40)
+            self.setMinimumWidth(100)
         
     def appendCellWidgetToColumn(self,type,initial=None,dict=None,max=None,readonly=False):
         self.column_id += 1
@@ -443,8 +445,9 @@ class LinesTool(QTableWidget):
 
 
 class AxesTool(QTableWidget):
-    def __init__(self, figs):
+    def __init__(self, figs, fixsize = True):
         super().__init__()
+        self.fixsize = fixsize
         self.header = ["figs","axes","title","xlabel","ylabel","xmin","xmax","xscale","ymin","ymax","yscale"]
         self.setColumnCount(len(self.header))
         self.setHorizontalHeaderLabels(self.header)
@@ -455,14 +458,15 @@ class AxesTool(QTableWidget):
         self.setWindowTitle("AxesTool")
 
     def fit_size(self):
-        self.setMinimumWidth(self.horizontalHeader().length()+40)
-        self.setMaximumWidth(self.horizontalHeader().length()+40)
-        self.setMinimumWidth(100)
-        height = self.verticalHeader().length()+40
-        height = height if height < 400 else 400
-        self.setMinimumHeight(height)
-        self.setMaximumHeight(self.verticalHeader().length()+40)
-        self.setMinimumWidth(100)
+        if self.fixsize:
+            self.setMinimumWidth(self.horizontalHeader().length()+40)
+            self.setMaximumWidth(self.horizontalHeader().length()+40)
+            self.setMinimumWidth(100)
+            height = self.verticalHeader().length()+40
+            height = height if height < 400 else 400
+            self.setMinimumHeight(height)
+            self.setMaximumHeight(self.verticalHeader().length()+40)
+            self.setMinimumWidth(100)
         
     def appendCellWidgetToColumn(self,type,initial=None,dict=None,max=None,readonly=False):
         self.column_id += 1
