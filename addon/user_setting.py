@@ -49,7 +49,7 @@ def gradient_color():
 
 def ppt(fs=18):
     set_fontsize(fs)
-    set_font("Myriad Pro")
+    set_font("Arial")
     set_framewidth(1.0)
     set_all_linewidth(1.5)
     set_all_markersize(8)
