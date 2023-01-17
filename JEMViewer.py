@@ -164,6 +164,18 @@ class MainWindow(QMainWindow):
         if q.text() == "Tile":
             self.mdi.tileSubWindows()
 
+    def tiling_windows(self):
+        try:
+            self.mdi.tileSubWindows()
+        except:
+            pass
+
+    def cascading_windows(self):
+        try:
+            self.mdi.cascadeSubWindows()
+        except:
+            pass
+
     def mode_switched(self, action):
         global mode
         if mode == action.text(): return
@@ -448,6 +460,8 @@ class MainWindow(QMainWindow):
             "legend_autoupdate": self.linestool.legend_autoupdate,
             "add_dock": self.add_dock,
             "add_mdi": self.add_mdiwindow,
+            "tiling_windows": self.tiling_windows,
+            "cascading_windows": self.cascading_windows,
         }
         self.ns.update(DEFAULT_NAMESPACE)
         self.ns.update(namespace)
