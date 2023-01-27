@@ -13,8 +13,13 @@ class UpdateChecker:
     def __init__(self):
         self.can_update = False
         self.urls = None
-        self.load_url()
         self.header = "\nJEMViewer 2\n"
+        try:
+            self.load_url()
+        except:
+            self.header += "Network error\n"
+            self.header += "Please check your network connection.\n\n"
+            return
         if import_failed:
             self.header += "You need to install git to manage software version.\n"
             self.header += "Please visit the manual site for more detail.\n\n"
